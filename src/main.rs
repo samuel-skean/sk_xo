@@ -1,40 +1,14 @@
+mod game;
+
 use std::{
     fs, io,
     os::unix::net::{SocketAddr, UnixDatagram},
 };
 
+use game::*;
+
 const SERVER_SOCK_PATH: &str = "skean_tic_tac_toe.sock";
 const PROMPT: &[u8] = b"> ";
-
-#[derive(Debug, Clone, Copy)]
-enum GameSquare {
-    X,
-    O,
-}
-
-struct GameBoard([Option<GameSquare>; 3 * 3]);
-
-impl GameBoard {
-    fn new() -> Self {
-        GameBoard([None; 3 * 3])
-    }
-
-    fn encode_to(&self, sink: &mut impl io::Write) {
-        for (i, square) in self.0.iter().enumerate() {
-            let index_char = [(i + 1) as u8 + b'0'];
-            sink.write_all(match square {
-                Some(GameSquare::X) => b"X",
-                Some(GameSquare::O) => b"O",
-                None => &index_char,
-            })
-            .unwrap();
-            // Put newlines after every 3.
-            if (i + 1) % 3 == 0 {
-                sink.write(b"\n").unwrap();
-            }
-        }
-    }
-}
 
 fn prompt(game_board: &GameBoard, socket: &UnixDatagram, peer_addr: &SocketAddr, buf: &mut [u8]) {
     let mut cursor = io::Cursor::new(buf);
