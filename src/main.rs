@@ -7,7 +7,7 @@ use std::{
 
 use game::*;
 
-const SERVER_SOCK_PATH: &str = "skean_tic_tac_toe.sock";
+const SERVER_SOCK_PATH: &str = "sk_xo.sock";
 const PROMPT: &[u8] = b"> ";
 
 fn prompt(game_board: &GameBoard, socket: &UnixDatagram, peer_addr: &SocketAddr) {
