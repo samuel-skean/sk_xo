@@ -55,7 +55,9 @@ fn main() {
             let pos = match pos {
                 Ok(pos) => pos,
                 Err(e) => {
-                    socket.send_to_addr(e.to_string().as_bytes(), &peer_addr).unwrap();
+                    let mut error_string = e.to_string();
+                    error_string.push_str("\n> ");
+                    socket.send_to_addr(error_string.as_bytes(), &peer_addr).unwrap();
                     continue;
                 }
             };
