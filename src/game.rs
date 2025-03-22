@@ -1,4 +1,4 @@
-use std::io;
+use std::fmt;
 
 use thiserror::Error;
 
@@ -11,12 +11,12 @@ pub enum GameSquare {
     O,
 }
 
-impl GameSquare {
-    pub fn name(self) -> &'static str {
-        match self {
+impl fmt::Display for GameSquare {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
             GameSquare::X => "X",
             GameSquare::O => "O",
-        }
+        })
     }
 }
 
@@ -26,24 +26,30 @@ pub struct GameBoard([Option<GameSquare>; BOARD_SIZE as usize]);
 pub enum MoveError {
     #[error("Index was too big. Pick a number from 1 through {BOARD_SIZE}.")]
     PosTooBig(u8),
-    #[error("{} had already moved there.", .0.name())]
+    #[error("{0} had already moved there.")]
     AlreadyMoved(GameSquare),
 }
+
+impl fmt::Display for GameBoard {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for (i, square) in self.0.iter().enumerate() {
+            if let Some(filled_square) = square {
+                write!(f, "{filled_square}")?;
+            } else {
+                write!(f, "{}", i + 1)?;
+            }
+            // Put newlines after every 3.
+            if (i + 1) % 3 == 0 {
+                write!(f, "\n")?;
+            }
+        }
+        Ok(())
+    }
+}
+
 impl GameBoard {
     pub fn new() -> Self {
         GameBoard([None; 3 * 3])
-    }
-
-    pub fn encode_to(&self, sink: &mut impl io::Write) {
-        for (i, square) in self.0.iter().enumerate() {
-            let index_char = [(i + 1) as u8 + b'0'];
-            sink.write_all(square.map(|s| s.name().as_bytes()).unwrap_or(&index_char))
-                .unwrap();
-            // Put newlines after every 3.
-            if (i + 1) % 3 == 0 {
-                sink.write(b"\n").unwrap();
-            }
-        }
     }
 
     /// `pos` is 1-indexed.
