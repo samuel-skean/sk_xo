@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sk_xo"
+name = "sk_xo_server"
 version = "0.1.0"
 dependencies = [
  "thiserror",
