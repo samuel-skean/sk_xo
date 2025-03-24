@@ -92,6 +92,16 @@ impl Game {
     }
 
     fn winner(&self) -> Option<Mark> {
+        // STRETCH: A "cleaner" implementation might involve chunking an
+        // iterator of all the squares we have to check. The standard library
+        // doesn't let you chunk arbitrary iterators, though - just slices. So,
+        // we could copy the elements to a slice (but that's tricky to do
+        // without allocation, which I want to avoid). Or, we could use
+        // something like `itertools`'s [`chunk`
+        // method](https://docs.rs/itertools/latest/itertools/trait.Itertools.html#method.chunks),
+        // which by the nature of its task must allocate sometimes (but not
+        // here, where we'd consume the chunks entirely in order). Of course, we
+        // could also write a loop ourselves to handle the chunks.
         fn check_series(series: impl IntoIterator<Item = Option<Mark>>) -> Option<Mark> {
             let mut series = series.into_iter();
             let first = series.next().unwrap();
