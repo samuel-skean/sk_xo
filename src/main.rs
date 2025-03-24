@@ -41,7 +41,7 @@ impl DerefMut for NetworkedGame {
 const SERVER_SOCK_PATH: &str = "sk_xo.sock";
 const PROMPT: &str = "> ";
 
-// TODO: Man, it seems like writing to the cursor means there's more unwraps
+// STRETCH: Man, it seems like writing to the cursor means there's more unwraps
 // because each write can fail. They can, but only because we could run out of
 // room, I think. How well optimized does this get? Does it check against other
 // failure conditions too?
@@ -132,7 +132,6 @@ fn main() {
 
             match game.make_move(pos) {
                 Ok(true) => {
-                    // STRETCH: Might be nice to tell the player if *they* won.
                     // TODO: Always print this on *a* newline.
                     write!(scratch_cursor, "{player} won!\n").unwrap();
                     let written_to_scratch =
