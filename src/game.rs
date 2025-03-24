@@ -51,8 +51,8 @@ impl fmt::Display for Game {
             } else {
                 write!(f, "{}", i + 1)?;
             }
-            // Put newlines after every 3.
-            if (i + 1) % 3 == 0 {
+            // Put newlines after every SIDE_LENGTH.
+            if (i + 1) % SIDE_LENGTH as usize == 0 {
                 write!(f, "\n")?;
             }
         }
@@ -63,7 +63,7 @@ impl fmt::Display for Game {
 impl Game {
     pub fn new() -> Self {
         Self {
-            board: [None; 3 * 3],
+            board: [None; (SIDE_LENGTH * SIDE_LENGTH) as usize],
             current_player: Mark::X,
         }
     }
