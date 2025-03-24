@@ -57,6 +57,7 @@ fn prompt(game: &NetworkedGame, socket: &UnixDatagram, peer_addr: &SocketAddr) {
 }
 
 fn main() {
+    // TODO: Handle ties. (mostly in game.rs, but also here).
     match fs::remove_file(SERVER_SOCK_PATH) {
         Ok(()) => {}
         Err(e) if e.kind() == io::ErrorKind::NotFound => {}
@@ -68,7 +69,7 @@ fn main() {
 
     loop {
         let mut scratch = [b'h'; 0x1000];
-        // TODO: Any way to just discard these initial packets?
+        // STRETCH: Any way to just discard these initial packets?
         let (_, first_peer_addr) = socket.recv_from(&mut scratch).unwrap();
 
         let mut second_peer_addr;
