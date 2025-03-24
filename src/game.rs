@@ -92,16 +92,22 @@ impl Game {
     }
 
     fn winner(&self) -> Option<Mark> {
+        fn check_series(series: impl IntoIterator<Item = Option<Mark>>) -> Option<Mark> {
+            let mut series = series.into_iter();
+            let first = series.next().unwrap();
+            if series.all(|s| s == first) {
+                first
+            } else {
+                None
+            }
+        }
+        
         fn check_pattern(
-            pattern: impl Iterator<Item = impl Iterator<Item = Option<Mark>>>,
+            pattern: impl IntoIterator<Item = impl IntoIterator<Item = Option<Mark>>>,
         ) -> Option<Mark> {
-            for mut series in pattern {
-                let first = series.next().unwrap();
-                if first == None {
-                    continue;
-                }
-                if series.all(|s| s == first) {
-                    return first;
+            for series in pattern {
+                if let Some(winner) = check_series(series) {
+                    return Some(winner);
                 }
             }
             None
@@ -113,9 +119,14 @@ impl Game {
             .map(|s| s.iter().copied());
         let columns = (0..SIDE_LENGTH)
             .map(|y| (0..SIDE_LENGTH).map(move |x| self.board[(3 * x + y) as usize]));
+        let downwards_diagonal =
+            (0..SIDE_LENGTH).map(|i| self.board[(i + SIDE_LENGTH * i) as usize]);
+        let upwards_diagonal =
+            (0..SIDE_LENGTH).map(|i| self.board[(SIDE_LENGTH - 1 - i + SIDE_LENGTH * i) as usize]);
 
         check_pattern(rows)
             .or_else(|| check_pattern(columns))
-            .or_else(|| None /* TODO: Handle diagonals. */)
+            .or_else(|| check_series(downwards_diagonal))
+            .or_else(|| check_series(upwards_diagonal))
     }
 }
