@@ -1,3 +1,5 @@
+use std::os::unix::net::UnixDatagram;
+
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyEventKind};
 use ratatui::{
@@ -9,18 +11,28 @@ use ratatui::{
 fn main() -> Result<()> {
     color_eyre::install()?;
     let mut terminal = ratatui::init();
-    let result = App::default().run(&mut terminal);
+    let result = App::new()?.run(&mut terminal);
     ratatui::restore();
     result
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 struct App {
+    socket: UnixDatagram,
     counter: u8,
     exit: bool,
 }
 
 impl App {
+    fn new() -> Result<Self> {
+        let socket = UnixDatagram::bind("client_test.sock")?;
+        socket.set_nonblocking(true).unwrap();
+        Ok(App {
+            socket: socket,
+            counter: 0,
+            exit: false,
+        })
+    }
     fn run(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
         while !self.exit {
             terminal.draw(|frame| frame.render_widget(&*self, frame.area()))?;
@@ -30,12 +42,26 @@ impl App {
     }
 
     fn handle_events(&mut self) -> Result<()> {
+        let mut buf = [0; 0x1000];
+        if let Ok(dgram_size) = self.socket.recv(&mut buf) {
+            let change = std::str::from_utf8(&buf[..dgram_size])
+                .unwrap()
+                .parse()
+                .unwrap();
+            self.counter = self.counter.saturating_add(change);
+        }
         match event::read()? {
             Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
                 match key_event.code {
-                    event::KeyCode::Left => { self.counter = self.counter.saturating_sub(1); }
-                    event::KeyCode::Right => { self.counter = self.counter.saturating_add(1); }
-                    event::KeyCode::Char('q') => { self.exit = true; },
+                    event::KeyCode::Left => {
+                        self.counter = self.counter.saturating_sub(1);
+                    }
+                    event::KeyCode::Right => {
+                        self.counter = self.counter.saturating_add(1);
+                    }
+                    event::KeyCode::Char('q') => {
+                        self.exit = true;
+                    }
                     _ => {}
                 }
             }
@@ -56,14 +82,14 @@ impl Widget for &App {
             " Quit ".into(),
             "<Q>".into(),
         ]);
-        let block = Block::bordered().title(title.centered()).title_bottom(instructions.centered());
+        let block = Block::bordered()
+            .title(title.centered())
+            .title_bottom(instructions.centered());
 
-        let counter_text = Text::from(vec![
-            Line::from(vec![
-                "Value: ".into(),
-                self.counter.to_string().yellow(),
-            ])
-        ]);
+        let counter_text = Text::from(vec![Line::from(vec![
+            "Value: ".into(),
+            self.counter.to_string().yellow(),
+        ])]);
         Paragraph::new(counter_text)
             .centered()
             .block(block)
