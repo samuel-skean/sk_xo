@@ -1,4 +1,4 @@
-use std::{os::unix::net::UnixDatagram, time::Duration};
+use std::{fs, os::unix::net::UnixDatagram, path::Path, time::Duration};
 
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyEventKind};
@@ -8,11 +8,32 @@ use ratatui::{
     widgets::{Block, Paragraph, Widget},
 };
 
+/// Set a panic hook that deletes the specified path before calling the original
+/// panic hook.
+/// 
+/// I'm doing this instead of relying on Drop because Drop may not be called on
+/// panics.
+fn delete_file_on_panic(path: &'static Path) {
+    let old_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        if let Err(e) = fs::remove_file(path) {
+            eprintln!(
+                "Encountered error when removing file '{}': {e}",
+                path.to_string_lossy()
+            );
+        }
+        old_hook(info);
+    }));
+}
+
 fn main() -> Result<()> {
     color_eyre::install()?;
+    let socket = UnixDatagram::bind("client_test.sock")?;
+    delete_file_on_panic("client_test.sock".as_ref());
     let mut terminal = ratatui::init();
-    let result = App::new().run(&mut terminal);
+    let result = App::new(socket).run(&mut terminal);
     ratatui::restore();
+    fs::remove_file("client_test.sock").unwrap();
     result
 }
 
@@ -24,8 +45,7 @@ struct App {
 }
 
 impl App {
-    fn new() -> Self {
-        let socket = UnixDatagram::bind("client_test.sock").unwrap();
+    fn new(socket: UnixDatagram) -> Self {
         socket.set_nonblocking(true).unwrap();
         App {
             socket,
