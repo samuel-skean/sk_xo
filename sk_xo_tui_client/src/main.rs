@@ -11,7 +11,7 @@ use ratatui::{
 fn main() -> Result<()> {
     color_eyre::install()?;
     let mut terminal = ratatui::init();
-    let result = App::new()?.run(&mut terminal);
+    let result = App::new().run(&mut terminal);
     ratatui::restore();
     result
 }
@@ -24,14 +24,14 @@ struct App {
 }
 
 impl App {
-    fn new() -> Result<Self> {
-        let socket = UnixDatagram::bind("client_test.sock")?;
+    fn new() -> Self {
+        let socket = UnixDatagram::bind("client_test.sock").unwrap();
         socket.set_nonblocking(true).unwrap();
-        Ok(App {
+        App {
             socket,
             counter: 0,
             exit: false,
-        })
+        }
     }
     fn run(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
         while !self.exit {
