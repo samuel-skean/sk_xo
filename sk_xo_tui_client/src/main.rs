@@ -1,4 +1,4 @@
-use std::os::unix::net::UnixDatagram;
+use std::{os::unix::net::UnixDatagram, time::Duration};
 
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyEventKind};
@@ -42,22 +42,24 @@ impl App {
     }
 
     fn handle_events(&mut self) -> Result<()> {
-        match event::read()? {
-            Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
-                match key_event.code {
-                    event::KeyCode::Left => {
-                        self.counter = self.counter.saturating_sub(1);
+        if event::poll(Duration::from_millis(16))? {
+            match event::read()? {
+                Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
+                    match key_event.code {
+                        event::KeyCode::Left => {
+                            self.counter = self.counter.saturating_sub(1);
+                        }
+                        event::KeyCode::Right => {
+                            self.counter = self.counter.saturating_add(1);
+                        }
+                        event::KeyCode::Char('q') => {
+                            self.exit = true;
+                        }
+                        _ => {}
                     }
-                    event::KeyCode::Right => {
-                        self.counter = self.counter.saturating_add(1);
-                    }
-                    event::KeyCode::Char('q') => {
-                        self.exit = true;
-                    }
-                    _ => {}
                 }
+                _ => {}
             }
-            _ => {}
         }
 
         // Process a packet after blocking, so it's one step closer to the
