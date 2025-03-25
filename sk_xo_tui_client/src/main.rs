@@ -42,14 +42,6 @@ impl App {
     }
 
     fn handle_events(&mut self) -> Result<()> {
-        let mut buf = [0; 0x1000];
-        if let Ok(dgram_size) = self.socket.recv(&mut buf) {
-            let change = std::str::from_utf8(&buf[..dgram_size])
-                .unwrap()
-                .parse()
-                .unwrap();
-            self.counter = self.counter.saturating_add(change);
-        }
         match event::read()? {
             Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
                 match key_event.code {
@@ -66,6 +58,17 @@ impl App {
                 }
             }
             _ => {}
+        }
+
+        // Process a packet after blocking, so it's one step closer to the
+        // screen refresh.
+        let mut buf = [0; 0x1000];
+        if let Ok(dgram_size) = self.socket.recv(&mut buf) {
+            let change = std::str::from_utf8(&buf[..dgram_size])
+                .unwrap()
+                .parse()
+                .unwrap();
+            self.counter = self.counter.saturating_add(change);
         }
         Ok(())
     }
