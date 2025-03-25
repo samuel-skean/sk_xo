@@ -28,7 +28,7 @@ impl App {
         let socket = UnixDatagram::bind("client_test.sock")?;
         socket.set_nonblocking(true).unwrap();
         Ok(App {
-            socket: socket,
+            socket,
             counter: 0,
             exit: false,
         })
