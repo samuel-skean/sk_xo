@@ -1,7 +1,10 @@
+mod grid;
+
 use std::{fs, os::unix::net::UnixDatagram, path::Path, time::Duration};
 
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyEventKind};
+use grid::text_from_squares;
 use ratatui::{
     DefaultTerminal,
     prelude::*,
@@ -10,7 +13,7 @@ use ratatui::{
 
 /// Set a panic hook that deletes the specified path before calling the original
 /// panic hook.
-/// 
+///
 /// I'm doing this instead of relying on Drop because Drop may not be called on
 /// panics.
 fn delete_file_on_panic(path: &'static Path) {
@@ -111,11 +114,8 @@ impl Widget for &App {
             .title(title.centered())
             .title_bottom(instructions.centered());
 
-        let counter_text = Text::from(vec![Line::from(vec![
-            "Value: ".into(),
-            self.counter.to_string().yellow(),
-        ])]);
-        Paragraph::new(counter_text)
+        let grid = text_from_squares(vec!["1", "2", "3", "4"], 2, 2);
+        Paragraph::new(grid)
             .centered()
             .block(block)
             .render(area, buf);
